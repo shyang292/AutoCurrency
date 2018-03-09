@@ -36,7 +36,11 @@ class Store extends \Magento\Store\Model\Store
 		$currencyModel = ObjectManager::getInstance()->get('Magento\Directory\Model\Currency');
 		$allowedCurrencies = $currencyModel->getConfigAllowCurrencies();
 		//$allowedCurrencies = $this->currencyFactory->getConfigAllowCurrencies();
-		
+//		echo "allowed Currencies : ";
+//		var_dump($allowedCurrencies);
+//		echo "\n";
+//		echo "currency code: ";
+//		echo $currencyCode;
 		if(!in_array($currencyCode, $allowedCurrencies)) {
 			return $result;
 		}
@@ -55,7 +59,7 @@ class Store extends \Magento\Store\Model\Store
 		$helper = ObjectManager::getInstance()->get('Chapagain\AutoCurrency\Helper\Data');
 		
 		// load Ip2Country database
-		$ipc = $helper->loadIp2Country();
+		//$ipc = $helper->loadIp2Country();
 		
 		// get IP Address
 		$ipAddress = $helper->getIpAddress();
@@ -65,17 +69,55 @@ class Store extends \Magento\Store\Model\Store
 		if (!$helper->checkValidIp($ipAddress)) {
 			return null;
 		}
-		
-		$countryCode = $ipc->lookup($ipAddress);
-		
-		// return default currency code when country code is ZZ
-		// i.e. if browsed in localhost / personal computer
-		if ($countryCode == 'ZZ') {
-			$currencyCode = parent::getDefaultCurrencyCode();
-		} else {				
-			$currencyCode = $helper->getCurrencyByCountry($countryCode);
+
+		//$countryCode = $ipc->lookup($ipAddress);
+		//------------------------lookup countryCode with api----------------------------------------
+        $abmIPAddress = array("184.67.239.26",
+            "184.67.248.98",
+            "184.67.242.51",
+            "184.67.242.52",
+            "184.67.242.53",
+            "184.67.242.50",
+            "184.67.242.42",
+            "184.67.242.43",
+            "184.67.242.44",
+            "184.67.242.45",
+            "174.7.0.36",
+            "174.7.4.110"
+        );
+        if(in_array($ipAddress,$abmIPAddress)){
+            $countryCode = "US";
+            $countryName = "United States";
+        }else{
+            $countryHttpUrl = "https://freegeoip.net/json/$ipAddress";
+            $countryHttpJson = file_get_contents($countryHttpUrl);
+            if($countryHttpJson){
+                $countryHttpArray = json_decode($countryHttpJson,TRUE);
+                $countryCode = $countryHttpArray["country_code"];
+                $countryName = $countryHttpArray['country_name'];
+            }else{
+                $countryCode = "CA";
+                $countryName = "Canada";
+            }
+        }
+        //------------------------lookup countryCode with api--------------------------------------------
+		if($countryCode == 'US' || $countryCode == 'CN'){
+            $currencyCode = 'USD'; // 1
+		}else if($countryCode == 'CA'){
+			$currencyCode = 'CAD'; //1.15
+		}else{//other countries besides US, CN, CA
+			$currencyCode = 'CNY';  //1.5
 		}
-		
+
+//		// return default currency code when country code is ZZ
+//		// i.e. if browsed in localhost / personal computer
+//		if ($countryCode == 'ZZ') {
+//			$currencyCode = parent::getDefaultCurrencyCode();
+//		} else {
+//			$currencyCode = $helper->getCurrencyByCountry($countryCode);
+//		}
+//
+		echo 'Currency Code is: '.$currencyCode;
 		return $currencyCode;
 	}
 }
