@@ -22,7 +22,12 @@ class Store extends \Magento\Store\Model\Store
         $helper = ObjectManager::getInstance()->get('Chapagain\AutoCurrency\Helper\Data');
         if ($helper->isEnabled()) {
             //$result = parent::getDefaultCurrencyCode();
-            return $this->getCurrencyCodeByIp('');
+            //return $this->getCurrencyCodeByIp('');
+            if(empty($this->getCurrencyCodeByIp(''))){
+                return "CAD";
+            }else{
+                return $this->getCurrencyCodeByIp('');
+            }
         } else {
             return parent::getDefaultCurrencyCode();
         }
